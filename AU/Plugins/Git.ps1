@@ -26,7 +26,10 @@ param(
     [string]$commitStrategy = 'single',
 
     # Branch name
-    [string]$Branch = 'master'
+    [string]$Branch = 'master',
+
+    # Create the branch if it does not exist
+    [switch] $CreateBranch
 )
 
 [array]$packages = if ($Force) { $Info.result.updated } else { $Info.result.pushed }
@@ -51,9 +54,14 @@ if ($User -and $Password) {
     Add-Content "$env:USERPROFILE\.git-credentials" "https://${Password}:x-oauth-basic@$machine`n"
 }
 
-Write-Host "Executing git pull"
-git checkout -q $Branch
-git pull -q origin $Branch
+if ($CreateBranch) {
+    Write-Host "Creating $Branch branch"
+    git checkout -B $Branch
+} else {
+    Write-Host "Executing git pull"
+    git checkout -q $Branch
+    git pull -q origin $Branch
+}
 
 $gitAddArgs = @()
 if (-not $AddNew)
@@ -92,7 +100,11 @@ else {
 
 }
 Write-Host "Pushing changes"
-git push -q
+if ($CreateBranch) {
+    git push --set-upstream origin $Branch
+} else {
+    git push -q
+}
 if ($commitStrategy -eq 'atomictag') {
     write-host 'Atomic Tag Push'
     git push -q --tags
