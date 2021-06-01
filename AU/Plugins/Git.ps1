@@ -54,14 +54,12 @@ if ($User -and $Password) {
     Add-Content "$env:USERPROFILE\.git-credentials" "https://${Password}:x-oauth-basic@$machine`n"
 }
 
-if ($CreateBranch) {
-    Write-Host "Creating $Branch branch"
-    git checkout -B $Branch
-} else {
-    Write-Host "Executing git pull"
-    git checkout -q $Branch
-    git pull -q origin $Branch
-}
+
+Write-Host "Checking out/resetting $Branch branch"
+git checkout -B $Branch
+
+Write-Host "Executing git pull"
+git pull -q origin $Branch
 
 $gitAddArgs = @()
 if (-not $AddNew)
@@ -100,11 +98,8 @@ else {
 
 }
 Write-Host "Pushing changes"
-if ($CreateBranch) {
-    git push --set-upstream origin $Branch
-} else {
-    git push -q
-}
+git push origin $Branch
+
 if ($commitStrategy -eq 'atomictag') {
     write-host 'Atomic Tag Push'
     git push -q --tags
